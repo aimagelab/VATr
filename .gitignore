@@ -1,0 +1,6 @@
+wandb
+files/IAM-32.pickle
+files/CVL-32.pickle
+files/resnet_18_pretrained.pth
+files/vatr.pth
+*.pyc
