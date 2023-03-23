@@ -1,5 +1,5 @@
-![test](https://raw.githubusercontent.com/aimagelab/VATr/main/files/model_dark.svg?token=GHSAT0AAAAAACAMD5YCAVEL7PVSY3P7GCPYZA4G4VQ#gh-dark-mode-only)
-![test](https://raw.githubusercontent.com/aimagelab/VATr/main/files/model_light.svg?token=GHSAT0AAAAAACAMD5YCN4YSZAHKMDD3Z4RUZA4G46A#gh-light-mode-only)
+![test](https://raw.githubusercontent.com/aimagelab/VATr/main/files/model_dark.svg?token=GHSAT0AAAAAACAMD5YD3576YHRB7ZU6UHJCZA4HHHQ#gh-dark-mode-only)
+![test](https://raw.githubusercontent.com/aimagelab/VATr/main/files/model_light.svg?token=GHSAT0AAAAAACAMD5YCUSZN2P6EEPSBN3CSZA4HHIQ#gh-light-mode-only)
 
 ## Installation
 
