@@ -5,7 +5,8 @@ import torchvision.transforms as transforms
 import os
 import pickle
 import numpy as np
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
+from pathlib import Path
 
 
 def get_transform(grayscale=False, convert=True):
@@ -434,19 +435,42 @@ class TextSentenceval(TextDatasetval):
             res.append(data)
         return res
 
-
-class ReverseImgDataset(TextDataset):
-    def __init__(self, img_path, size, author_id, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.img = transforms.ToTensor()(Image.open(img_path).convert('L'))
-        self.size = size
-        self.fixed_author = author_id
+class FolderDataset:
+    def __init__(self, folder_path, num_examples=15):
+        folder_path = Path(folder_path)
+        self.imgs = list(folder_path.iterdir())
+        self.transform = get_transform(grayscale=True)
+        self.num_examples = num_examples
 
     def __len__(self):
-        return self.size
+        return len(self.imgs)
 
-    def __getitem__(self, index):
-        item = super().__getitem__(self.fixed_author)
-        item['img'] = self.img
-        item['label'] = 'a'.encode('utf-8')
+    def sample_style(self):
+        random_idxs = np.random.choice(len(self.imgs), self.num_examples, replace=False)
+        imgs = [Image.open(self.imgs[idx]).convert('L') for idx in random_idxs]
+        imgs = [img.resize((img.size[0] * 32 // img.size[1], 32), Image.BILINEAR) for img in imgs]
+        imgs = [np.array(img) for img in imgs]
+
+        max_width = 192  # [img.shape[1] for img in imgs]
+
+        imgs_pad = []
+        imgs_wids = []
+
+        for img in imgs:
+            img = 255 - img
+            img_height, img_width = img.shape[0], img.shape[1]
+            outImg = np.zeros((img_height, max_width), dtype='float32')
+            outImg[:, :img_width] = img[:, :max_width]
+
+            img = 255 - outImg
+
+            imgs_pad.append(self.transform(Image.fromarray(img.astype(np.uint8))))
+            imgs_wids.append(img_width)
+
+        imgs_pad = torch.cat(imgs_pad, 0)
+
+        item = {
+            'simg': imgs_pad,  # widths of the N images [list(N)]
+            'swids': imgs_wids,  # N images (15) that come from the same author [N (15), H (32), MAX_W (192)]
+        }
         return item
