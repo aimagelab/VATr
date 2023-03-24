@@ -35,7 +35,13 @@ python train.py
 The model `resnet_18_pretrained.pth` was pretrained using this dataset: [download link](https://drive.google.com/drive/folders/1Xs_rR0EWt09-K6vmlvAI8pwsrmHSknC8?usp=share_link)
 
 ## Generate fakes
-
+To generate all samples for FID evaluation you can use that script
 ```bash
 python generate_fakes.py --checkpoint files/vatr.pth
 ```
+To generate a specific text with a given input style folder containing images of handwritten single words:
+```
+python generator.py --style-folder "files/style_samples/00" --checkpoint "files/vatr.pth" --output "files/output_00.png" --text "That's one small step for man, one giant leap for mankind ΑαΒβΓγΔδ"
+```
+Output: `That's one small step for man, one giant leap for mankind ΑαΒβΓγΔδ`
+![test](https://github.com/aimagelab/VATr/blob/main/files/output_00.png?raw=true)
