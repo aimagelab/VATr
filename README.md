@@ -14,7 +14,7 @@ pip install -r requirements.txt
 From [this folder](https://drive.google.com/drive/folders/1FGJe2uCuK8T9HrFzY_Zc-KMIo0oPJGGY?usp=share_link) you have to download the files `IAM-32.pickle` and `resnet_18_pretrained.pth` and place them into the `files` folder.
 
 ```bash
-gdown --folder -O files/ "https://drive.google.com/drive/u/2/folders/1FGJe2uCuK8T9HrFzY_Zc-KMIo0oPJGGY"
+gdown --folder "https://drive.google.com/drive/u/2/folders/1FGJe2uCuK8T9HrFzY_Zc-KMIo0oPJGGY"
 ```
 
 ## Training
