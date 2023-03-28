@@ -1,3 +1,17 @@
+# Handwritten Text Generation from Visual Archetypes
+
+This repository contains the reference code and dataset for the paper [Handwritten Text Generation from Visual Archetypes](https://arxiv.org/abs/2303.15269).
+
+If you find it useful, please cite it as:
+```
+@inproceedings{pippi2023handwritten,
+  title={{Handwritten Text Generation from Visual Archetypes}},
+  author={Pippi, Vittorio and Cascianelli, Silvia and Cucchiara, Rita},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  year={2023}
+}
+```
+
 ![test](https://github.com/aimagelab/VATr/blob/main/files/model_dark.png?raw=true#gh-dark-mode-only)
 ![test](https://github.com/aimagelab/VATr/blob/main/files/model_light.png?raw=true#gh-light-mode-only)
 
@@ -22,6 +36,7 @@ gdown --folder "https://drive.google.com/drive/u/2/folders/1FGJe2uCuK8T9HrFzY_Zc
 ```bash
 python train.py
 ```
+
 Useful arguments:
 ```bash
 python train.py
@@ -34,14 +49,22 @@ python train.py
 ### Pretraining dataset
 The model `resnet_18_pretrained.pth` was pretrained using this dataset: [download link](https://drive.google.com/drive/folders/1Xs_rR0EWt09-K6vmlvAI8pwsrmHSknC8?usp=share_link)
 
-## Generate fakes
-To generate all samples for FID evaluation you can use that script
+
+## Generate styled Handwtitten Text Images
+
+To generate all samples for FID evaluation you can use the following script:
+
 ```bash
 python generate_fakes.py --checkpoint files/vatr.pth
 ```
-To generate a specific text with a given input style folder containing images of handwritten single words:
+
+To generate a specific text with a given input style folder containing images of handwritten single words you can use the following script:
+
 ```
 python generator.py --style-folder "files/style_samples/00" --checkpoint "files/vatr.pth" --output "files/output_00.png" --text "That's one small step for man, one giant leap for mankind ΑαΒβΓγΔδ"
 ```
-Output: `That's one small step for man, one giant leap for mankind ΑαΒβΓγΔδ`
+
+
+Output for `That's one small step for man, one giant leap for mankind ΑαΒβΓγΔδ`:
+
 ![test](https://github.com/aimagelab/VATr/blob/main/files/output_00.png?raw=true)
