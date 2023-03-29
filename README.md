@@ -47,7 +47,7 @@ python train.py
 ```
 
 ### Pretraining dataset
-The model `resnet_18_pretrained.pth` was pretrained using this dataset: [download link](https://drive.google.com/drive/folders/1Xs_rR0EWt09-K6vmlvAI8pwsrmHSknC8?usp=share_link)
+The model `resnet_18_pretrained.pth` was pretrained by using this dataset: [download link](https://drive.google.com/drive/folders/1Xs_rR0EWt09-K6vmlvAI8pwsrmHSknC8?usp=share_link)
 
 
 ## Generate styled Handwtitten Text Images
