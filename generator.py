@@ -5,6 +5,7 @@ import collections
 from data.dataset import FolderDataset
 import numpy as np
 import cv2
+from pathlib import Path
 
 def load_checkpoint(model, checkpoint):
     if not isinstance(checkpoint, collections.OrderedDict):
@@ -112,14 +113,23 @@ class VATr_writer:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--style-folder", default='files/style_samples/00', type=str)
-    parser.add_argument("-t", "--text", default='Tha\'s one small step for man, one giant leap for mankind ΑαΒβΓγΔδ', type=str)
+    parser.add_argument("-t", "--text", default='That\'s one small step for man, one giant leap for mankind ΑαΒβΓγΔδ', type=str)
+    parser.add_argument("--text-path", default=None, type=str, help='Path to text file with texts to generate')
     parser.add_argument("-c", "--checkpoint", default='files/vatr.pth', type=str)
     parser.add_argument("-o", "--output", default='files/output.png', type=str)
     args = parser.parse_args()
+    
+    if args.text_path is not None:
+        with open(args.text_path, 'r') as f:
+            args.text = f.read()
+    args.text = args.text.splitlines()
+    args.output = Path(args.output)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
 
     writer = VATr_writer(args.checkpoint)
     writer.set_style_folder(args.style_folder)
     fakes = writer.generate(args.text)
-    assert len(fakes) == 1
-    cv2.imwrite(args.output, fakes[0])
+    for i, fake in enumerate(fakes):
+        dst_path = args.output.parent / (args.output.stem + f'_{i:03d}' + args.output.suffix)
+        cv2.imwrite(str(dst_path), fake)
     print('Done')
