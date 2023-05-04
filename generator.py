@@ -78,7 +78,7 @@ class FakeArgs:
 class VATr_writer:
     def __init__(self, checkpoint_path, args=FakeArgs()):
         self.model = VATr(args)
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location=args.device)
         load_checkpoint(self.model, checkpoint)
         self.model.eval()
         self.style_dataset = None

@@ -127,7 +127,8 @@ class Generator(nn.Module):
             self.args.tn_dim_feedforward,
             self.args.alphabet + self.args.special_alphabet,
             input_type=self.args.query_input,
-            linear=self.args.query_linear
+            linear=self.args.query_linear,
+            device=self.args.device
         )
         # self.query_embed = LearnableModule(self.args.tn_dim_feedforward)
         self.pos_encoder = PositionalEncoding1D(self.args.tn_hidden_dim)
