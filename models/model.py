@@ -3,6 +3,7 @@ from torch.nn import CTCLoss, MSELoss, L1Loss
 from torch.nn.utils import clip_grad_norm_
 import time
 import sys
+import random
 import torchvision.models as models
 from models.transformer import *
 from .BigGAN_networks import *
@@ -672,7 +673,7 @@ class VATr(nn.Module):
         self.text_encode = self.text_encode.to(self.args.device).detach()
         self.len_text = self.len_text.detach()
 
-        self.words = [word.encode('utf-8') for word in np.random.choice(self.lex, self.args.batch_size)]
+        self.words = [word.encode('utf-8') for word in random.sample(self.lex, self.args.batch_size)]
         self.text_encode_fake, self.len_text_fake, self.encode_pos_fake = self.netconverter.encode(self.words)
         self.text_encode_fake = self.text_encode_fake.to(self.args.device)
         self.one_hot_fake = make_one_hot(self.text_encode_fake, self.len_text_fake, self.args.vocab_size).to(
@@ -682,7 +683,7 @@ class VATr(nn.Module):
         self.encode_pos_fake_js = []
 
         for _ in range(self.args.num_words - 1):
-            self.words_j = [word.encode('utf-8') for word in np.random.choice(self.lex, self.args.batch_size)]
+            self.words_j = [word.encode('utf-8') for word in random.sample(self.lex, self.args.batch_size)]
             self.text_encode_fake_j, self.len_text_fake_j, self.encode_pos_fake_j = self.netconverter.encode(self.words_j)
             self.text_encode_fake_j = self.text_encode_fake_j.to(self.args.device)
             self.text_encode_fake_js.append(self.text_encode_fake_j)
