@@ -81,7 +81,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_words", default=3, type=int)
     parser.add_argument("--is_cycle", default=False, type=bool)
     parser.add_argument("--is_kld", default=False, type=bool)
-    parser.add_argument("--add_noise", default=False, type=bool)
+    parser.add_argument("--add_noise", action='store_true')
     parser.add_argument("--all_chars", default=False, type=bool)
     parser.add_argument("--save_model", default=5, type=int)
     parser.add_argument("--save_model_history", default=500, type=int)

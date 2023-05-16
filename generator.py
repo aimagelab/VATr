@@ -117,6 +117,7 @@ if __name__ == '__main__':
     parser.add_argument("--text-path", default=None, type=str, help='Path to text file with texts to generate')
     parser.add_argument("-c", "--checkpoint", default='files/vatr.pth', type=str)
     parser.add_argument("-o", "--output", default='files/output.png', type=str)
+    parser.add_argument("--add_noise", action='store_true')
     args = parser.parse_args()
     
     if args.text_path is not None:
@@ -126,7 +127,9 @@ if __name__ == '__main__':
     args.output = Path(args.output)
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
-    writer = VATr_writer(args.checkpoint)
+    fake_args = FakeArgs()
+    fake_args.add_noise = args.add_noise
+    writer = VATr_writer(args.checkpoint, fake_args)
     writer.set_style_folder(args.style_folder)
     fakes = writer.generate(args.text)
     for i, fake in enumerate(fakes):
