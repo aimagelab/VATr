@@ -222,6 +222,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print('KeyboardInterrupt')
-    finally:
         wandb.finish()
-        exit()
