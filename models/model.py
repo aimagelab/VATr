@@ -3,7 +3,6 @@ from torch.nn import CTCLoss, MSELoss, L1Loss
 from torch.nn.utils import clip_grad_norm_
 import time
 import sys
-import random
 import torchvision.models as models
 from models.transformer import *
 from .BigGAN_networks import *
@@ -128,8 +127,7 @@ class Generator(nn.Module):
             self.args.tn_dim_feedforward,
             self.args.alphabet + self.args.special_alphabet,
             input_type=self.args.query_input,
-            linear=self.args.query_linear,
-            device=self.args.device
+            linear=self.args.query_linear
         )
         # self.query_embed = LearnableModule(self.args.tn_dim_feedforward)
         self.pos_encoder = PositionalEncoding1D(self.args.tn_hidden_dim)
@@ -284,6 +282,14 @@ class Generator(nn.Module):
             OUT_IMGS.append(h.detach())
 
         return OUT_IMGS
+    
+    def compute_style(self, ST):
+        B, N, R, C = ST.shape
+        FEAT_ST = self.Feat_Encoder(ST.view(B * N, 1, R, C))
+        FEAT_ST = FEAT_ST.view(B, 512, 1, -1)
+        FEAT_ST_ENC = FEAT_ST.flatten(2).permute(2, 0, 1)
+        memory = self.encoder(FEAT_ST_ENC)
+        return memory
 
     def forward(self, ST, QR, QRs=None, QR_pos=None, QRs_pos=None, mode='train'):
         # Attention Visualization Init
@@ -302,13 +308,7 @@ class Generator(nn.Module):
 
         # Attention Visualization Init
 
-        B, N, R, C = ST.shape
-        FEAT_ST = self.Feat_Encoder(ST.view(B * N, 1, R, C))
-        FEAT_ST = FEAT_ST.view(B, 512, 1, -1)
-
-        FEAT_ST_ENC = FEAT_ST.flatten(2).permute(2, 0, 1)
-
-        memory = self.encoder(FEAT_ST_ENC)
+        memory = self.compute_style(ST)
 
         # QR_EMB = self.query_embed.weight[QR].permute(1, 0, 2)
         QR_EMB = self.query_embed(QR).permute(1, 0, 2)
@@ -337,7 +337,7 @@ class Generator(nn.Module):
         for hook in self.hooks:
             hook.remove()
 
-        return h
+        return h, memory
 
 
 class VATr(nn.Module):
@@ -354,12 +354,7 @@ class VATr(nn.Module):
         self.netW = WDiscriminator(
             resolution=self.args.resolution, n_classes=self.args.vocab_size, output_dim=self.args.num_writers
         ).to(self.args.device)
-        # self.netD = nn.DataParallel(Discriminator(
-        #     resolution=self.args.resolution, n_classes=self.args.vocab_size
-        # )).to(self.args.device)
-        # self.netW = nn.DataParallel(WDiscriminator(
-        #     resolution=self.args.resolution, n_classes=self.args.vocab_size, output_dim=self.args.num_writers
-        # )).to(self.args.device)
+        
         self.netconverter = strLabelConverter(self.args.alphabet + self.args.special_alphabet)
 
         self.netOCR = CRNN(self.args).to(self.args.device)
@@ -395,8 +390,7 @@ class VATr(nn.Module):
         self.loss_OCR_real = 0
         self.loss_w_fake = 0
         self.loss_w_real = 0
-        self.Lcycle1 = 0
-        self.Lcycle2 = 0
+        self.Lcycle = 0
         self.lda1 = 0
         self.lda2 = 0
         self.KLD = 0
@@ -631,8 +625,7 @@ class VATr(nn.Module):
         losses['OCR_real'] = self.loss_OCR_real
         losses['w_fake'] = self.loss_w_fake
         losses['w_real'] = self.loss_w_real
-        losses['cycle1'] = self.Lcycle1
-        losses['cycle2'] = self.Lcycle2
+        losses['cycle'] = self.Lcycle
         losses['lda1'] = self.lda1
         losses['lda2'] = self.lda2
         losses['KLD'] = self.KLD
@@ -673,7 +666,7 @@ class VATr(nn.Module):
         self.text_encode = self.text_encode.to(self.args.device).detach()
         self.len_text = self.len_text.detach()
 
-        self.words = [word.encode('utf-8') for word in random.sample(self.lex, self.args.batch_size)]
+        self.words = [word.encode('utf-8') for word in np.random.choice(self.lex, self.args.batch_size)]
         self.text_encode_fake, self.len_text_fake, self.encode_pos_fake = self.netconverter.encode(self.words)
         self.text_encode_fake = self.text_encode_fake.to(self.args.device)
         self.one_hot_fake = make_one_hot(self.text_encode_fake, self.len_text_fake, self.args.vocab_size).to(
@@ -683,13 +676,13 @@ class VATr(nn.Module):
         self.encode_pos_fake_js = []
 
         for _ in range(self.args.num_words - 1):
-            self.words_j = [word.encode('utf-8') for word in random.sample(self.lex, self.args.batch_size)]
+            self.words_j = [word.encode('utf-8') for word in np.random.choice(self.lex, self.args.batch_size)]
             self.text_encode_fake_j, self.len_text_fake_j, self.encode_pos_fake_j = self.netconverter.encode(self.words_j)
             self.text_encode_fake_j = self.text_encode_fake_j.to(self.args.device)
             self.text_encode_fake_js.append(self.text_encode_fake_j)
             self.encode_pos_fake_js.append(self.encode_pos_fake_j)
 
-        self.fake = self.netG(self.sdata, self.text_encode_fake, self.text_encode_fake_js, self.encode_pos_fake, self.encode_pos_fake_js)
+        self.fake, self.style = self.netG(self.sdata, self.text_encode_fake, self.text_encode_fake_js, self.encode_pos_fake, self.encode_pos_fake_js)
 
     def backward_D_OCR(self):
         self.real.__repr__()
@@ -831,11 +824,20 @@ class VATr(nn.Module):
 
         return self.loss_D
 
+    def compute_cycle_loss(self):
+        fake_input = torch.ones_like(self.sdata)
+        width = min(self.sdata.size(-1), self.fake.size(-1))
+        fake_input[:, :, :, :width] = self.fake.repeat(1, 15, 1, 1)[:, :, :, :width]
+        with torch.no_grad():
+            fake_style = self.netG.compute_style(fake_input)
+        return torch.sum(torch.abs(self.style.detach() - fake_style), dim=1).mean()
+
     def backward_G_only(self):
 
         self.gb_alpha = 0.7
-        # self.Lcycle1 = self.Lcycle1.mean()
-        # self.Lcycle2 = self.Lcycle2.mean()
+        if self.args.is_cycle:
+            self.Lcycle = self.compute_cycle_loss()
+
         self.loss_G = loss_hinge_gen(self.netD(**{'x': self.fake}), self.len_text_fake.detach(), True).mean()
 
         if not self.args.no_ocr_loss:
@@ -845,7 +847,7 @@ class VATr(nn.Module):
                                            self.len_text_fake.detach())
             self.loss_OCR_fake = torch.mean(loss_OCR_fake[~torch.isnan(loss_OCR_fake)])
 
-        self.loss_G = self.loss_G + self.Lcycle1 + self.Lcycle2 + self.lda1 + self.lda2 - self.KLD
+        self.loss_G = self.loss_G + self.Lcycle + self.lda1 + self.lda2 - self.KLD
 
         if not self.args.no_ocr_loss:
             self.loss_T = self.loss_G + self.loss_OCR_fake
@@ -893,15 +895,15 @@ class VATr(nn.Module):
 
     def backward_G_WL(self):
         self.gb_alpha = 0.7
-        # self.Lcycle1 = self.Lcycle1.mean()
-        # self.Lcycle2 = self.Lcycle2.mean()
+        if self.args.is_cycle:
+            self.Lcycle = self.compute_cycle_loss()
 
         self.loss_G = loss_hinge_gen(self.netD(**{'x': self.fake}), self.len_text_fake.detach(), True).mean()
 
         if not self.args.no_writer_loss:
             self.loss_w_fake = self.netW(self.fake, self.input['wcl'].to(self.args.device)).mean()
 
-        self.loss_G = self.loss_G + self.Lcycle1 + self.Lcycle2 + self.lda1 + self.lda2 - self.KLD
+        self.loss_G = self.loss_G + self.Lcycle + self.lda1 + self.lda2 - self.KLD
 
         if not self.args.no_writer_loss:
             self.loss_T = self.loss_G + self.loss_w_fake * self.args.writer_loss_weight
