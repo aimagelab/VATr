@@ -17,7 +17,7 @@ If you find it useful, please cite it as:
 
 ## Installation
 
-```bash
+```console
 conda create --name vatr python=3.9
 conda activate vatr
 conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia
@@ -27,18 +27,18 @@ pip install -r requirements.txt
 
 From [this folder](https://drive.google.com/drive/folders/1FGJe2uCuK8T9HrFzY_Zc-KMIo0oPJGGY?usp=share_link) you have to download the files `IAM-32.pickle` and `resnet_18_pretrained.pth` and place them into the `files` folder.
 
-```bash
+```console
 gdown --folder "https://drive.google.com/drive/u/2/folders/1FGJe2uCuK8T9HrFzY_Zc-KMIo0oPJGGY"
 ```
 
 ## Training
 
-```bash
+```console
 python train.py
 ```
 
 Useful arguments:
-```bash
+```console
 python train.py
         --feat_model_path PATH  # path to the pretrained resnet 18 checkpoint. If none, the resnet will be trained from scratch
         --dataset DATASET       # dataset to use. Default IAM
@@ -54,13 +54,13 @@ The model `resnet_18_pretrained.pth` was pretrained by using this dataset: [down
 
 To generate all samples for FID evaluation you can use the following script:
 
-```bash
+```console
 python generate_fakes.py --checkpoint files/vatr.pth
 ```
 
 To generate a specific text with a given input style folder containing images of handwritten single words you can use the following script:
 
-```
+```console
 python generator.py --style-folder "files/style_samples/00" --checkpoint "files/vatr.pth" --output "files/output_00.png" --text "That's one small step for man, one giant leap for mankind ΑαΒβΓγΔδ"
 ```
 
@@ -68,3 +68,7 @@ python generator.py --style-folder "files/style_samples/00" --checkpoint "files/
 Output for `That's one small step for man, one giant leap for mankind ΑαΒβΓγΔδ`:
 
 ![test](https://github.com/aimagelab/VATr/blob/main/files/output_00.png?raw=true)
+
+
+### Implementation details
+This work is partially based on the code released for [Handwriting-Transformers](https://github.com/ankanbhunia/Handwriting-Transformers)
