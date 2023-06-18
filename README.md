@@ -1,9 +1,7 @@
 # Handwritten Text Generation from Visual Archetypes
+[**`🚀 Try out our live demo!`**](https://vatr-demo.streamlit.app/)
 
 This repository contains the reference code and dataset for the paper [Handwritten Text Generation from Visual Archetypes](https://arxiv.org/abs/2303.15269).
-
-[<img alt="alt_text" width="100px" src="https://img.uxwing.com/wp-content/themes/uxwing/download/web-app-development/demo-icon.png"/>](https://vatr-demo.streamlit.app/)
-
 If you find it useful, please cite it as:
 ```
 @inproceedings{pippi2023handwritten,
