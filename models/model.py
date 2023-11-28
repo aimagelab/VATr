@@ -3,6 +3,7 @@ from torch.nn import CTCLoss, MSELoss, L1Loss
 from torch.nn.utils import clip_grad_norm_
 import time
 import sys
+import random
 import torchvision.models as models
 from models.transformer import *
 from .BigGAN_networks import *
@@ -96,7 +97,8 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self.args = args
         INP_CHANNEL = self.args.num_examples
-        if self.args.is_seq: INP_CHANNEL = 1
+        if self.args.is_seq:
+            INP_CHANNEL = 1
 
         encoder_layer = TransformerEncoderLayer(self.args.tn_hidden_dim, self.args.tn_nheads,
                                                 self.args.tn_dim_feedforward,
@@ -267,12 +269,14 @@ class Generator(nn.Module):
                 hs = self.reparameterize(hs_mu, hs_logvar).permute(1, 0, 2).unsqueeze(0)
 
             h = hs.transpose(1, 2)[-1]  # torch.cat([hs.transpose(1, 2)[-1], QR_EMB.permute(1,0,2)], -1)
-            if self.args.add_noise: h = h + self.noise.sample(h.size()).squeeze(-1).to(self.args.device)
+            if self.args.add_noise:
+                h = h + self.noise.sample(h.size()).squeeze(-1).to(self.args.device)
 
             h = self.linear_q(h)
             h = h.contiguous()
 
-            if self.args.all_chars: h = torch.stack([h[i][QR[i]] for i in range(self.args.self.args.batch_size)], 0)
+            if self.args.all_chars:
+                h = torch.stack([h[i][QR[i]] for i in range(self.args.self.args.batch_size)], 0)
 
             h = h.view(h.size(0), h.shape[1] * 2, 4, -1)
             h = h.permute(0, 3, 2, 1)
@@ -282,7 +286,7 @@ class Generator(nn.Module):
             OUT_IMGS.append(h.detach())
 
         return OUT_IMGS
-    
+
     def compute_style(self, ST):
         B, N, R, C = ST.shape
         FEAT_ST = self.Feat_Encoder(ST.view(B * N, 1, R, C))
@@ -321,7 +325,8 @@ class Generator(nn.Module):
 
         h = hs.transpose(1, 2)[-1]  # torch.cat([hs.transpose(1, 2)[-1], QR_EMB.permute(1,0,2)], -1)
 
-        if self.args.add_noise: h = h + self.noise.sample(h.size()).squeeze(-1).to(self.args.device)
+        if self.args.add_noise:
+            h = h + self.noise.sample(h.size()).squeeze(-1).to(self.args.device)
 
         h = self.linear_q(h)
         h = h.contiguous()
@@ -354,7 +359,7 @@ class VATr(nn.Module):
         self.netW = WDiscriminator(
             resolution=self.args.resolution, n_classes=self.args.vocab_size, output_dim=self.args.num_writers
         ).to(self.args.device)
-        
+
         self.netconverter = strLabelConverter(self.args.alphabet + self.args.special_alphabet)
 
         self.netOCR = CRNN(self.args).to(self.args.device)
@@ -409,7 +414,8 @@ class VATr(nn.Module):
         self.eval_text_encode = self.eval_text_encode.to(self.args.device).repeat(self.args.batch_size, 1, 1)
 
     def save_images_for_fid_calculation(self, path, loader, split='train'):
-        if not isinstance(path, Path): path = Path(path)
+        if not isinstance(path, Path):
+            path = Path(path)
         path.mkdir(exist_ok=True, parents=True)
 
         self.real_base = path / f'Real_{split}'
@@ -666,7 +672,7 @@ class VATr(nn.Module):
         self.text_encode = self.text_encode.to(self.args.device).detach()
         self.len_text = self.len_text.detach()
 
-        self.words = [word.encode('utf-8') for word in np.random.choice(self.lex, self.args.batch_size)]
+        self.words = [word.encode('utf-8') for word in random.choices(self.lex, k=self.args.batch_size)]
         self.text_encode_fake, self.len_text_fake, self.encode_pos_fake = self.netconverter.encode(self.words)
         self.text_encode_fake = self.text_encode_fake.to(self.args.device)
         self.one_hot_fake = make_one_hot(self.text_encode_fake, self.len_text_fake, self.args.vocab_size).to(
@@ -676,7 +682,7 @@ class VATr(nn.Module):
         self.encode_pos_fake_js = []
 
         for _ in range(self.args.num_words - 1):
-            self.words_j = [word.encode('utf-8') for word in np.random.choice(self.lex, self.args.batch_size)]
+            self.words_j = [word.encode('utf-8') for word in random.choices(self.lex, k=self.args.batch_size)]
             self.text_encode_fake_j, self.len_text_fake_j, self.encode_pos_fake_j = self.netconverter.encode(self.words_j)
             self.text_encode_fake_j = self.text_encode_fake_j.to(self.args.device)
             self.text_encode_fake_js.append(self.text_encode_fake_j)
@@ -699,7 +705,7 @@ class VATr(nn.Module):
             self.pred_real_OCR = self.netOCR(self.real.detach())
             preds_size = torch.IntTensor([self.pred_real_OCR.size(0)] * self.args.batch_size).detach()
             loss_OCR_real = self.OCR_criterion(self.pred_real_OCR, self.text_encode.detach(), preds_size,
-                                           self.len_text.detach())
+                                               self.len_text.detach())
             self.loss_OCR_real = torch.mean(loss_OCR_real[~torch.isnan(loss_OCR_real)])
 
             loss_total = self.loss_D + self.loss_OCR_real
@@ -844,7 +850,7 @@ class VATr(nn.Module):
             pred_fake_OCR = self.netOCR(self.fake)
             preds_size = torch.IntTensor([pred_fake_OCR.size(0)] * self.args.batch_size).detach()
             loss_OCR_fake = self.OCR_criterion(pred_fake_OCR, self.text_encode_fake.detach(), preds_size,
-                                           self.len_text_fake.detach())
+                                               self.len_text_fake.detach())
             self.loss_OCR_fake = torch.mean(loss_OCR_fake[~torch.isnan(loss_OCR_fake)])
 
         self.loss_G = self.loss_G + self.Lcycle + self.lda1 + self.lda2 - self.KLD
