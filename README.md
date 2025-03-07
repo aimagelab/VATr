@@ -1,5 +1,5 @@
 # Handwritten Text Generation from Visual Archetypes
-[**`🚀 Try out our live demo!`**](https://vatr-demo.streamlit.app/)
+[**🤗 `HuggingFace implementation!`**](https://huggingface.co/blowing-up-groundhogs/vatrpp)
 
 This repository contains the reference code and dataset for the paper [Handwritten Text Generation from Visual Archetypes](https://arxiv.org/abs/2303.15269).
 If you find it useful, please cite it as:
@@ -51,6 +51,7 @@ The model `resnet_18_pretrained.pth` was pretrained by using this dataset: [down
 
 
 ## Generate styled Handwtitten Text Images
+[**🤗 `HuggingFace implementation!`**](https://huggingface.co/blowing-up-groundhogs/vatrpp)
 
 To generate all samples for FID evaluation you can use the following script:
 
